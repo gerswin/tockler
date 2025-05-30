@@ -4,21 +4,39 @@ import { db } from '../db';
 import { getAppColor } from './app-setting-service';
 import { splitTrackItemAtMidnight } from './trackItem.db.util';
 
+const WEBHOOK_URL = 'https://auto.linktic.com/webhook/tockler/log-activity';
+
+async function sendWebhook(item: NewTrackItem & { id?: number }) {
+    try {
+        await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item),
+        });
+    } catch (error) {
+        console.warn('Failed to send webhook', error);
+    }
+}
+
 async function saveSplitItems(splitItems: NewTrackItem[], originalItem: NewTrackItem) {
     if (splitItems.length === 1) {
         // No splitting needed, insert as usual
         const query = db.insert(trackItems).values(originalItem);
         const result = await query.execute();
-        return result.lastInsertRowid as number;
+        const id = result.lastInsertRowid as number | bigint;
+        await sendWebhook({ ...originalItem, id: Number(id) });
+        return id;
     } else {
         // Insert all split items
         console.warn(`Splitting track item into ${splitItems.length} parts at midnight boundaries`);
-        const ids: number[] = [];
+        const ids: (number | bigint)[] = [];
 
         for (const splitItem of splitItems) {
             const query = db.insert(trackItems).values(splitItem);
             const result = await query.execute();
-            ids.push(result.lastInsertRowid as number);
+            const id = result.lastInsertRowid as number | bigint;
+            ids.push(id);
+            await sendWebhook({ ...splitItem, id: Number(id) });
         }
 
         // Return the ID of the last item
