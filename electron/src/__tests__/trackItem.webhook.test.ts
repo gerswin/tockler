@@ -1,12 +1,11 @@
 import { Client } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TrackItem, NewTrackItem, trackItems } from '../drizzle/schema';
+import { NewTrackItem, trackItems } from '../drizzle/schema';
 import { TrackItemType } from '../enums/track-item-type';
 import { State } from '../enums/state';
 import { COLORS } from './color.testUtils';
 import { addColorToApp, setupTestDb } from './db.testUtils';
-import { selectAllAppItems } from './query.testUtils';
 import { getTimestamp } from './time.testUtils';
 
 vi.mock('electron');
