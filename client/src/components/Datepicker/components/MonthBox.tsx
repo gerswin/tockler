@@ -1,0 +1,81 @@
+import { Box, Text } from '@chakra-ui/react';
+import { isEndDate, isStartDate, useDay } from '@datepicker-react/hooks';
+import { DateTime } from 'luxon';
+import { useDatepickerContext } from '../context/DatepickerContext';
+import { DayWrapper } from './DayWrapper';
+
+interface DayProps {
+    month: string;
+    date: Date;
+    children: React.ReactNode;
+    onDateClicked: (date: DateTime) => void;
+}
+
+function getVariant({ isSelected, isWithinHoverRange, isFirst, isLast }) {
+    if (!isSelected && !isWithinHoverRange) return 'normal';
+    if (isSelected) return 'selected';
+    if (isWithinHoverRange) return 'rangeHover';
+    if (isFirst || isLast) return 'firstOrLast';
+    if (isFirst) return 'first';
+    if (isLast) return 'last';
+
+    return 'normal';
+}
+export function MonthBox({ month, date, onDateClicked, children }: DayProps) {
+    const {
+        focusedDate,
+        isDateFocused,
+        isDateHovered,
+        isDateBlocked,
+        isFirstOrLastSelectedDate,
+        onDateSelect,
+        onDateFocus,
+        onDateHover,
+        startDate,
+        endDate,
+    } = useDatepickerContext();
+
+    const dayProps = useDay({
+        date,
+        focusedDate,
+        isDateFocused,
+        isDateSelected: isDateFocused,
+        isDateHovered,
+        isDateBlocked,
+        isFirstOrLastSelectedDate,
+        onDateFocus,
+        onDateSelect,
+        onDateHover,
+    });
+
+    const { onKeyDown, onMouseEnter, tabIndex, isSelected, isWithinHoverRange, disabledDate } = dayProps;
+
+    const isFirst = isStartDate(date, startDate);
+    const isLast = isEndDate(date, endDate);
+
+    const variant = getVariant({
+        isSelected,
+        isWithinHoverRange,
+        isFirst,
+        isLast,
+    });
+
+    return (
+        <DayWrapper
+            variant={variant}
+            onClick={() => onDateClicked(DateTime.fromJSDate(date))}
+            onKeyDown={onKeyDown}
+            onMouseEnter={onMouseEnter}
+            tabIndex={tabIndex}
+            disabled={disabledDate}
+            aria-label={`Day-${date.toDateString()}`}
+        >
+            <Box textAlign="left" p={3} pb={0}>
+                <Text fontWeight="bold" fontSize="larger">
+                    {month}
+                </Text>
+            </Box>
+            {children}
+        </DayWrapper>
+    );
+}
